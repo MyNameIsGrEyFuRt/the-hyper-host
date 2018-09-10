@@ -6,7 +6,7 @@ module.exports = {
 // This is the name of the action displayed in the editor.
 //---------------------------------------------------------------------
 
-name: "Send Embed Message",
+name: "Store Time Info",
 
 //---------------------------------------------------------------------
 // Action Section
@@ -14,7 +14,7 @@ name: "Send Embed Message",
 // This is the section the action will fall into.
 //---------------------------------------------------------------------
 
-section: "Embed Message",
+section: "Other Stuff",
 
 //---------------------------------------------------------------------
 // Action Subtitle
@@ -23,30 +23,25 @@ section: "Embed Message",
 //---------------------------------------------------------------------
 
 subtitle: function(data) {
-	const channels = ['Same Channel', 'Command Author', 'Mentioned User', 'Mentioned Channel', 'Default Channel', 'Temp Variable', 'Server Variable', 'Global Variable']
-	return `${channels[parseInt(data.channel)]}: ${data.varName}`;
+	const time = ['Year', 'Month', 'Day of the Month', 'Hour', 'Minute', 'Second', 'Milisecond', 'Month (text)'];
+	return `${time[parseInt(data.type)]}`;
 },
 
 //---------------------------------------------------------------------
-	 // DBM Mods Manager Variables (Optional but nice to have!)
-	 //
-	 // These are variables that DBM Mods Manager uses to show information
-	 // about the mods for people to see in the list.
-	 //---------------------------------------------------------------------
+// Action Storage Function
+//
+// Stores the relevant variable info for the editor.
+//---------------------------------------------------------------------
 
-	 // Who made the mod (If not set, defaults to "DBM Mods")
-	 author: "DBM",
-
-	 // The version of the mod (Defaults to 1.0.0)
-	 version: "1.8.2",
-
-	 // A short description to show on the mod line for this mod (Must be on a single line)
-	 short_description: "Changed Category",
-
-	 // If it depends on any other mods by name, ex: WrexMODS if the mod uses something from WrexMods
-
-
-	 //---------------------------------------------------------------------
+variableStorage: function(data, varType) {
+	const type = parseInt(data.storage);
+	if(type !== varType) return;
+	let result = "Number";
+	if(data.type === "7") {
+		result = "Text";
+	}
+	return ([data.varName, result]);
+},
 
 //---------------------------------------------------------------------
 // Action Fields
@@ -56,47 +51,52 @@ subtitle: function(data) {
 // are also the names of the fields stored in the action's JSON data.
 //---------------------------------------------------------------------
 
-fields: ["storage", "varName", "channel", "varName2"],
+fields: ["type", "storage", "varName"],
 
 //---------------------------------------------------------------------
 // Command HTML
 //
 // This function returns a string containing the HTML used for
-// editting actions.
+// editting actions. 
 //
 // The "isEvent" parameter will be true if this action is being used
-// for an event. Due to their nature, events lack certain information,
+// for an event. Due to their nature, events lack certain information, 
 // so edit the HTML to reflect this.
 //
-// The "data" parameter stores constants for select elements to use.
+// The "data" parameter stores constants for select elements to use. 
 // Each is an array: index 0 for commands, index 1 for events.
-// The names are: sendTargets, members, roles, channels,
+// The names are: sendTargets, members, roles, channels, 
 //                messages, servers, variables
 //---------------------------------------------------------------------
 
 html: function(isEvent, data) {
 	return `
 <div>
+	<div style="padding-top: 8px; width: 70%;">
+		Time Info:<br>
+		<select id="type" class="round">
+			<option value="0" selected>Year</option>
+			<option value="1">Month (Number)</option>
+			<option value="7">Month (Text)</option>
+			<option value="2">Day of the Month</option>
+			<option value="3">Hour</option>
+			<option value="4">Minute</option>
+			<option value="5">Second</option>
+			<option value="6">Milisecond</option>
+		</select>
+	</div>
+</div><br>
+<div>
 	<div style="float: left; width: 35%;">
-		Source Embed Object:<br>
-		<select id="storage" class="round" onchange="glob.refreshVariableList(this)">
+		Store In:<br>
+		<select id="storage" class="round">
 			${data.variables[1]}
 		</select>
 	</div>
 	<div id="varNameContainer" style="float: right; width: 60%;">
 		Variable Name:<br>
-		<input id="varName" class="round" type="text" list="variableList"><br>
+		<input id="varName" class="round" type="text"><br>
 	</div>
-</div><br><br><br>
-<div style="padding-top: 8px; float: left; width: 35%;">
-	Send To:<br>
-	<select id="channel" class="round" onchange="glob.sendTargetChange(this, 'varNameContainer2')">
-		${data.sendTargets[isEvent ? 1 : 0]}
-	</select>
-</div>
-<div id="varNameContainer2" style="display: none; float: right; width: 60%;">
-	Variable Name:<br>
-	<input id="varName2" class="round" type="text" list="variableList"><br>
 </div>`
 },
 
@@ -109,45 +109,55 @@ html: function(isEvent, data) {
 //---------------------------------------------------------------------
 
 init: function() {
-	const {glob, document} = this;
-
-	glob.sendTargetChange(document.getElementById('channel'), 'varNameContainer2')
 },
 
 //---------------------------------------------------------------------
 // Action Bot Function
 //
 // This is the function for the action within the Bot's Action class.
-// Keep in mind event calls won't have access to the "msg" parameter,
+// Keep in mind event calls won't have access to the "msg" parameter, 
 // so be sure to provide checks for variable existance.
 //---------------------------------------------------------------------
 
 action: function(cache) {
 	const data = cache.actions[cache.index];
-	const server = cache.server;
-	const storage = parseInt(data.storage);
-	const varName = this.evalMessage(data.varName, cache);
-	const embed = this.getVariable(storage, varName, cache);
-	if(!embed) {
-		this.callNextAction(cache);
-		return;
+	const type = parseInt(data.type);
+	let result;
+	switch(type) {
+		case 0:
+			result = new Date().getFullYear();
+			break;
+		case 1:
+			result = new Date().getMonth() + 1;
+			break;
+		case 2:
+			result = new Date().getDate();
+			break;
+		case 3:
+			result = new Date().getHours();
+			break;
+		case 4:
+			result = new Date().getMinutes();
+			break;
+		case 5:
+			result = new Date().getSeconds();
+			break;
+		case 6:
+			result = new Date().getMiliseconds();
+			break;
+		case 7:
+			const months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+			result = months[(new Date().getMonth())];
+		default:
+			break;
 	}
-
-	const msg = cache.msg;
-	const channel = parseInt(data.channel);
-	const varName2 = this.evalMessage(data.varName2, cache);
-	const target = this.getSendTarget(channel, varName2, cache);
-	if(target && target.send) {
-		try {
-			target.send({embed}).then(function() {
-				this.callNextAction(cache);
-			}.bind(this)).catch(this.displayError.bind(this, data, cache));
-		} catch(e) {
-			this.displayError(data, cache, e);
-		}
-	} else {
-		this.callNextAction(cache);
+	//console.log((new Date()).year)
+	if(result !== undefined) {
+		const storage = parseInt(data.storage);
+		const varName = this.evalMessage(data.varName, cache);
+		this.storeValue(result, storage, varName, cache);
 	}
+	this.callNextAction(cache);
 },
 
 //---------------------------------------------------------------------
