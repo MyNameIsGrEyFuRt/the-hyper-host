@@ -1,1 +1,1 @@
-[null]
+[null,{"name":"botsunucuyagirdiginde","temp":"","event-type":"4","actions":[{"roleName":"Madenci","hoist":"true","mentionable":"true","color":"#C0C0C0","position":"","storage":"1","varName":"madenci","name":"Create Role"},{"channel":"4","varName":"","message":":white_check_mark: Sunucuya giriş yaptım ve /madencilik komutu için Madenci adında bir rol oluşturdum...\n\nNOT: /madencilik komutu Roleplay sunucular için yapılmıştır ve geliştirilicektir.\nAyrıca, /madencilik dışında yeni meslekler de gelicektir.","storage":"0","varName2":"","name":"Send Message"}]}]
